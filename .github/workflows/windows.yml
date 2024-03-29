@@ -1,0 +1,51 @@
+name: Compile PS3EYEDriver for Windows
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Install MinGW64
+      run: |
+        choco install -y mingw
+        refreshenv
+
+    - name: Install libusb-1.0
+      run: |
+        curl -L -o libusb-1.0.zip https://github.com/libusb/libusb/releases/download/v1.0.20/libusb-1.0.20.7z
+        7z x libusb-1.0.zip
+        mv libusb-1.0.20 libusb-1.0
+
+    - name: Install SDL2
+      run: |
+        curl -L -o SDL2.zip https://www.libsdl.org/release/SDL2-devel-2.0.4-mingw.tar.gz
+        7z x SDL2.zip
+        mv SDL2-2.0.4 SDL2
+
+    - name: Set up MinGW environment
+      run: |
+        export PATH=$PATH:/c/MinGW/bin
+        export PATH=$PATH:../SDL2/x86_64-w64-mingw32/bin
+
+    - name: Build PS3EYEDriver
+      run: |
+        cd PS3EYEDriver
+        mingw32-make
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: ps3eyedriver
+        path: PS3EYEDriver/ps3eye_sdl.exe
